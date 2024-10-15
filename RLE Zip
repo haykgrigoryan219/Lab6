@@ -1,0 +1,86 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Compressor
+{
+    public:
+    virtual string compress(const string& plainText) = 0;
+    virtual string decompress(const string& compressedText) = 0;
+    
+    virtual ~Compressor() = default;
+};
+
+class RLECompressor : public Compressor
+{
+    public:
+    
+    RLECompressor() {}
+    ~RLECompressor() override {}
+    
+    string compress(const string& plainText) override {
+        string compressed = "";
+        int length = plainText.length();
+        
+        for (int i = 0; i < length; ++i) {
+            char currentChar = plainText[i];
+            int count = 1;
+    
+            while (i + 1 < length && plainText[i] == plainText[i + 1]) {
+                count++;
+                i++;
+            }
+    
+            while (count > 255) {
+                compressed += currentChar;
+                compressed += (char)255;
+                count -= 255;
+            }
+    
+            compressed += currentChar;
+            compressed += (char)count;
+        }
+
+        return compressed;
+    }
+
+    string decompress(const string& compressedText) override {
+        string decompressed = "";
+        int length = compressedText.length();
+    
+        for (int i = 0; i < length; i += 2) {
+            char currentChar = compressedText[i];
+            int count = (unsigned char)compressedText[i + 1];
+    
+            decompressed.append(count, currentChar);
+        }
+    
+        return decompressed;
+    }
+};
+
+int main() {
+    string inputText;
+    cout << "Enter a string to compress: ";
+    cin >> inputText;
+    
+    Compressor& compressor = *new RLECompressor();
+    
+    string compressedText = compressor.compress(inputText);
+    cout << "Compressed string: ";
+    for (char c : compressedText) {
+        cout << c;
+    }
+    cout << endl;
+
+    string decompressedText = compressor.decompress(compressedText);
+    cout << "Decompressed string: " << decompressedText << endl;
+    
+    cout << "Original length: " << inputText.length() << endl;
+    cout << "Compressed length: " << compressedText.length() << endl;
+    cout << "Decompressed length: " << decompressedText.length() << endl;
+
+    delete &compressor;
+
+    return 0;
+}
